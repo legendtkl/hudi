@@ -207,6 +207,21 @@ public class HoodieTestSuiteWriter implements Serializable {
     }
   }
 
+  public void asyncClustering() {
+    // to be discussed
+    if (!cfg.useDeltaStreamer) {
+      Option<String> clusteringInstantOpt = writeClient.scheduleClustering(Option.empty());
+      clusteringInstantOpt.ifPresent(clusteringInstant -> {
+        // inline cluster should auto commit as the user is never given control
+        log.warn("Clustering instant :: " + clusteringInstant);
+        writeClient.cluster(clusteringInstant, true);
+      });
+    } else {
+      // TODO: fix clustering to be done async https://issues.apache.org/jira/browse/HUDI-1590
+      throw new IllegalArgumentException("Clustering cannot be triggered with deltastreamer");
+    }
+  }
+
   public Option<String> scheduleCompaction(Option<Map<String, String>> previousCommitExtraMetadata) throws
       Exception {
     if (!cfg.useDeltaStreamer) {
